@@ -75,7 +75,7 @@ class WaypointUpdater(object):
 
         return closest_index
 
-    def publish_waypoints(self, closest_index):
+    def publish_waypoints(self):
         final_lane = self.generate_lane()
         self.final_waypoints_pub.publish(final_lane)
 

@@ -147,18 +147,18 @@ class TLDetector(object):
         if(self.pose):
             car_waypoint_index = self.get_closest_waypoint(self.pose.pose.position.x, self.pose.pose.position.y)
 
-        diff = len(self.base_waypoints.waypoints)
-        for i, light in enumerate(self.lights):
-            # Get stop line waypoint index
-            line = stop_line_positions[i]
-            temp_waypoint_index = self.get_closest_waypoint(line[0], line[1])
+            diff = len(self.base_waypoints.waypoints)
+            for i, light in enumerate(self.lights):
+                # Get stop line waypoint index
+                line = stop_line_positions[i]
+                temp_waypoint_index = self.get_closest_waypoint(line[0], line[1])
 
-            # Find closest stop line waypoint index
-            d = temp_waypoint_index - car_waypoint_index
-            if d >= 0 and d < diff:
-                diff = d
-                closest_light = light
-                line_waypoint_index = temp_waypoint_index
+                # Find closest stop line waypoint index
+                d = temp_waypoint_index - car_waypoint_index
+                if d >= 0 and d < diff:
+                    diff = d
+                    closest_light = light
+                    line_waypoint_index = temp_waypoint_index
 
         if closest_light:
             state = self.get_light_state(closest_light)
