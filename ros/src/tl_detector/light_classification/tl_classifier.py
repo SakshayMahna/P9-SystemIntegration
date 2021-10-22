@@ -7,6 +7,8 @@ class TLClassifier(object):
     def __init__(self):
         PATH_TO_GRAPH = r'light_classification/model/ssd_inception.pb'
 
+        # Load Tensorflow Graph
+        # And initialize variables
         self.graph = tf.Graph()
         self.threshold = 0.5
 
@@ -34,6 +36,7 @@ class TLClassifier(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
+        # Infer a given image
         with self.graph.as_default():
             input_image = np.expand_dims(image, axis = 0)
             start = datetime.datetime.now()
@@ -49,6 +52,7 @@ class TLClassifier(object):
         scores = np.squeeze(scores)
         classes = np.squeeze(classes).astype(np.int32)
 
+        # Interpret score to generate prediction
         print('SCORES: ' + str(scores[0]))
         print('CLASSES: ' + str(classes[0]))
 

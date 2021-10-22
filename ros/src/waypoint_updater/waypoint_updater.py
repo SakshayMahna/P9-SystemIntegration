@@ -25,8 +25,11 @@ as well as to verify your TL classifier.
 TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
-LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
+# Constants
+LOOKAHEAD_WPS = 50 
 MAX_DECEL = 0.5
+STOPLINE_OFFSET = 4
+CONSTANT_DECEL = 1 / LOOKAHEAD_WPS
 
 class WaypointUpdater(object):
     def __init__(self):
@@ -38,7 +41,7 @@ class WaypointUpdater(object):
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
-        # TODO: Add other member variables you need below
+        # Initialize class variables
         self.base_lane = None
         self.pose = None
         self.stopline_waypoint_index = -1
@@ -48,13 +51,15 @@ class WaypointUpdater(object):
         self.loop()
 
     def loop(self):
+        # ROSPy loop to publish waypoints to follow
         rate = rospy.Rate(50)
         while not rospy.is_shutdown():
-            if self.pose and self.base_lane:
+            if self.pose and self.base_lane and self.waypoint_tree:
                 self.publish_waypoints()
             rate.sleep()
 
     def get_closest_waypoint_index(self):
+        # Function to get index of closest waypoint to given pose
         x = self.pose.pose.position.x
         y = self.pose.pose.position.y
         closest_index = self.waypoint_tree.query([x, y], 1)[1]
@@ -76,16 +81,20 @@ class WaypointUpdater(object):
         return closest_index
 
     def publish_waypoints(self):
+        # Function to generate a Lane Message and publish it
         final_lane = self.generate_lane()
         self.final_waypoints_pub.publish(final_lane)
 
     def generate_lane(self):
+        # Function to generate a Lane Message
         lane = Lane()
 
+        # Generate boundary indices
         closest_index = self.get_closest_waypoint_index()
         farthest_index = closest_index + LOOKAHEAD_WPS
         base_waypoints = self.base_lane.waypoints[closest_index : farthest_index]
 
+        # Conditions based on boundary indices
         if self.stopline_waypoint_index == -1 or self.stopline_waypoint_index >= farthest_index:
             lane.waypoints = base_waypoints
         else:
@@ -94,15 +103,18 @@ class WaypointUpdater(object):
         return lane
     
     def decelerate_waypoints(self, waypoints, closest_index):
+        # Function to calculate waypoints while decelerating
         result = []
 
+        # Iterate through the waypoints
         for index, waypoint in enumerate(waypoints):
             point = Waypoint()
             point.pose = waypoint.pose
 
-            stop_index = max(self.stopline_waypoint_index - closest_index - 2, 0)
+            # Adjust velocity to slow down
+            stop_index = max(self.stopline_waypoint_index - closest_index - STOPLINE_OFFSET, 0)
             distance = self.distance(waypoints, index, stop_index)
-            velocity = math.sqrt(2 * MAX_DECEL * distance)
+            velocity = math.sqrt(2 * MAX_DECEL * distance) + (index * CONSTANT_DECEL)
             if velocity < 1:
                 velocity = 0
 
@@ -112,16 +124,19 @@ class WaypointUpdater(object):
         return result
 
     def pose_cb(self, msg):
+        # Call back function for current pose
         self.pose = msg
 
     def waypoints_cb(self, waypoints):
-        self.base_waypoints = waypoints
+        # Call back function for base waypoints
+        self.base_lane = waypoints
         if not self.waypoints_2d:
             self.waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y] 
                                 for waypoint in waypoints.waypoints]
             self.waypoint_tree = KDTree(self.waypoints_2d)
 
     def traffic_cb(self, msg):
+        # Call back function for Traffic Lights
         self.stopline_waypoint_index = msg.data
 
     def obstacle_cb(self, msg):

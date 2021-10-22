@@ -18,6 +18,7 @@ class TLDetector(object):
     def __init__(self):
         rospy.init_node('tl_detector')
 
+        # Initialize Class variables
         self.pose = None
         self.base_waypoints = None
         self.waypoints_2d = None
@@ -55,9 +56,11 @@ class TLDetector(object):
         rospy.spin()
 
     def pose_cb(self, msg):
+        # Callback function for pose message
         self.pose = msg
 
     def waypoints_cb(self, waypoints):
+        # Callback function for base waypoint
         self.base_waypoints = waypoints
         if not self.waypoints_2d:
             self.waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y] 
@@ -65,6 +68,7 @@ class TLDetector(object):
             self.waypoint_tree = KDTree(self.waypoints_2d)
 
     def traffic_cb(self, msg):
+        # Callback function for traffic lights
         self.lights = msg.lights
 
     def image_cb(self, msg):
@@ -120,7 +124,6 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        # return light.state
         if(not self.has_image):
             self.prev_light_loc = None
             return False
@@ -144,7 +147,7 @@ class TLDetector(object):
 
         # List of positions that correspond to the line to stop in front of for a given intersection
         stop_line_positions = self.config['stop_line_positions']
-        if(self.pose):
+        if self.pose and self.waypoint_tree:
             car_waypoint_index = self.get_closest_waypoint(self.pose.pose.position.x, self.pose.pose.position.y)
 
             diff = len(self.base_waypoints.waypoints)
