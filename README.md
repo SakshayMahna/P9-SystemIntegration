@@ -61,6 +61,7 @@ After building the project, launch the launch file
 
 ```bash
 source devel/setup.sh
+find /home/workspace/your/directory -type f -iname "*.py" -exec chmod +x {} \;
 roslaunch launch/styx.launch
 ```
 
@@ -69,3 +70,5 @@ Wait for Tensorflow to initialize and then start the simulator.
 Results
 ---
 The Traffic Light Detection Model used is described in [REFLECTION.md](REFLECTION.md).
+
+[Youtube video](https://youtu.be/HYewiiKAOAI)
